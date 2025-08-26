@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		9BC8F0A32E5D748800A23155 /* LookatDeezShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9BC8F0992E5D748800A23155 /* LookatDeezShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9B29E5BC2E56BBDE0057275D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,13 +25,53 @@
 			remoteGlobalIDString = 9B29E5AD2E56BBDD0057275D;
 			remoteInfo = LookatDeez;
 		};
+		9BC8F0A12E5D748800A23155 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9B29E5A62E56BBDD0057275D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9BC8F0982E5D748800A23155;
+			remoteInfo = LookatDeezShare;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9BC8F0A82E5D748800A23155 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9BC8F0A32E5D748800A23155 /* LookatDeezShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		9B29E5AE2E56BBDD0057275D /* LookatDeez.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LookatDeez.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B29E5BB2E56BBDE0057275D /* LookatDeezTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LookatDeezTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B29E5C52E56BBDE0057275D /* LookatDeezUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LookatDeezUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9BC8F0992E5D748800A23155 /* LookatDeezShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LookatDeezShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9BC8F0A42E5D748800A23155 /* Exceptions for "LookatDeezShare" folder in "LookatDeezShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9BC8F0982E5D748800A23155 /* LookatDeezShare */;
+		};
+		9BC8F0B02E5E396600A23155 /* Exceptions for "Shared" folder in "LookatDeezShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AppGroup.swift,
+				ShareCodables.swift,
+			);
+			target = 9BC8F0982E5D748800A23155 /* LookatDeezShare */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9B29E5B02E56BBDD0057275D /* LookatDeez */ = {
@@ -43,6 +87,22 @@
 		9B29E5C82E56BBDE0057275D /* LookatDeezUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LookatDeezUITests;
+			sourceTree = "<group>";
+		};
+		9BC8F09A2E5D748800A23155 /* LookatDeezShare */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9BC8F0A42E5D748800A23155 /* Exceptions for "LookatDeezShare" folder in "LookatDeezShare" target */,
+			);
+			path = LookatDeezShare;
+			sourceTree = "<group>";
+		};
+		9BC8F0AE2E5E38F700A23155 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9BC8F0B02E5E396600A23155 /* Exceptions for "Shared" folder in "LookatDeezShare" target */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,15 +129,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9BC8F0962E5D748800A23155 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		9B29E5A52E56BBDD0057275D = {
 			isa = PBXGroup;
 			children = (
+				9BC8F0AE2E5E38F700A23155 /* Shared */,
 				9B29E5B02E56BBDD0057275D /* LookatDeez */,
 				9B29E5BE2E56BBDE0057275D /* LookatDeezTests */,
 				9B29E5C82E56BBDE0057275D /* LookatDeezUITests */,
+				9BC8F09A2E5D748800A23155 /* LookatDeezShare */,
 				9B29E5AF2E56BBDD0057275D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +157,7 @@
 				9B29E5AE2E56BBDD0057275D /* LookatDeez.app */,
 				9B29E5BB2E56BBDE0057275D /* LookatDeezTests.xctest */,
 				9B29E5C52E56BBDE0057275D /* LookatDeezUITests.xctest */,
+				9BC8F0992E5D748800A23155 /* LookatDeezShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,13 +172,16 @@
 				9B29E5AA2E56BBDD0057275D /* Sources */,
 				9B29E5AB2E56BBDD0057275D /* Frameworks */,
 				9B29E5AC2E56BBDD0057275D /* Resources */,
+				9BC8F0A82E5D748800A23155 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				9BC8F0A22E5D748800A23155 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9B29E5B02E56BBDD0057275D /* LookatDeez */,
+				9BC8F0AE2E5E38F700A23155 /* Shared */,
 			);
 			name = LookatDeez;
 			packageProductDependencies = (
@@ -163,6 +236,28 @@
 			productReference = 9B29E5C52E56BBDE0057275D /* LookatDeezUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		9BC8F0982E5D748800A23155 /* LookatDeezShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9BC8F0A52E5D748800A23155 /* Build configuration list for PBXNativeTarget "LookatDeezShare" */;
+			buildPhases = (
+				9BC8F0952E5D748800A23155 /* Sources */,
+				9BC8F0962E5D748800A23155 /* Frameworks */,
+				9BC8F0972E5D748800A23155 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				9BC8F09A2E5D748800A23155 /* LookatDeezShare */,
+			);
+			name = LookatDeezShare;
+			packageProductDependencies = (
+			);
+			productName = LookatDeezShare;
+			productReference = 9BC8F0992E5D748800A23155 /* LookatDeezShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +279,9 @@
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 9B29E5AD2E56BBDD0057275D;
 					};
+					9BC8F0982E5D748800A23155 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 				};
 			};
 			buildConfigurationList = 9B29E5A92E56BBDD0057275D /* Build configuration list for PBXProject "LookatDeez" */;
@@ -203,6 +301,7 @@
 				9B29E5AD2E56BBDD0057275D /* LookatDeez */,
 				9B29E5BA2E56BBDE0057275D /* LookatDeezTests */,
 				9B29E5C42E56BBDE0057275D /* LookatDeezUITests */,
+				9BC8F0982E5D748800A23155 /* LookatDeezShare */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +322,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9B29E5C32E56BBDE0057275D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9BC8F0972E5D748800A23155 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +359,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9BC8F0952E5D748800A23155 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +378,11 @@
 			isa = PBXTargetDependency;
 			target = 9B29E5AD2E56BBDD0057275D /* LookatDeez */;
 			targetProxy = 9B29E5C62E56BBDE0057275D /* PBXContainerItemProxy */;
+		};
+		9BC8F0A22E5D748800A23155 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9BC8F0982E5D748800A23155 /* LookatDeezShare */;
+			targetProxy = 9BC8F0A12E5D748800A23155 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -395,6 +513,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LookatDeez/LookatDeez.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H6CYWCSB6H;
@@ -423,6 +542,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = LookatDeez/LookatDeez.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = H6CYWCSB6H;
@@ -518,6 +638,58 @@
 			};
 			name = Release;
 		};
+		9BC8F0A62E5D748800A23155 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LookatDeezShare/LookatDeezShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H6CYWCSB6H;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LookatDeezShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LookatDeezShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ThisSpanksGaming.LookatDeez.LookatDeezShare;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		9BC8F0A72E5D748800A23155 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = LookatDeezShare/LookatDeezShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = H6CYWCSB6H;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = LookatDeezShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = LookatDeezShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ThisSpanksGaming.LookatDeez.LookatDeezShare;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -553,6 +725,15 @@
 			buildConfigurations = (
 				9B29E5D62E56BBDE0057275D /* Debug */,
 				9B29E5D72E56BBDE0057275D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9BC8F0A52E5D748800A23155 /* Build configuration list for PBXNativeTarget "LookatDeezShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9BC8F0A62E5D748800A23155 /* Debug */,
+				9BC8F0A72E5D748800A23155 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
