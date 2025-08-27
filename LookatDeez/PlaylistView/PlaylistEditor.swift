@@ -6,6 +6,7 @@ private enum EditorModal: Identifiable, Equatable {
     case addNewItem
     case addItem(UUID)          // selected item id
     case editPlaylist
+    case confirmDeleteAll
 
     var id: String {
         switch self {
@@ -13,6 +14,7 @@ private enum EditorModal: Identifiable, Equatable {
         case .addNewItem: return "addNewItem"
         case .addItem(let id): return "addItem-\(id)"
         case .editPlaylist: return "editPlaylist"
+        case .confirmDeleteAll: return "confirmDeleteAll"
         }
     }
 }
@@ -119,11 +121,27 @@ struct PlaylistEditor: View {
                             
                             Spacer()
                             
-                            // Right: play button (existing)
-                            PlayCornerButton(
-                                enabled: !sortedItems.isEmpty,
-                                action: { activeModal = .player }
-                            )
+                            // Right: corner action — trash when editing, play otherwise
+                            if editMode?.wrappedValue.isEditing == true {
+                                Button {
+                                    activeModal = .confirmDeleteAll
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .padding(14)
+                                        .background(.ultraThinMaterial, in: Capsule())
+                                        .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
+                                        .shadow(radius: 4, y: 2)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(sortedItems.isEmpty)
+                                .opacity(sortedItems.isEmpty ? 0.5 : 1.0)
+                                .accessibilityLabel("Delete all items")
+                            } else {
+                                PlayCornerButton(
+                                    enabled: !sortedItems.isEmpty,
+                                    action: { activeModal = .player }
+                                )
+                            }
                         }
                         
                         .padding(.horizontal,16).padding(.vertical,8)
@@ -144,7 +162,7 @@ struct PlaylistEditor: View {
             switch modal {
             case .player:
                 PlayAllView(items: sortedItems).ignoresSafeArea()
-
+                
             case .addItem(let iid):
                 if let pid = playlist?.id {
                     PlaylistItemAdd(playlistId: pid, itemId: iid)
@@ -157,7 +175,7 @@ struct PlaylistEditor: View {
                 } else {
                     Text("No playlist loaded")
                 }
-
+                
             case .editPlaylist:
                 if let p = playlist {
                     PlaylistAdd(playlist: p)
@@ -166,6 +184,36 @@ struct PlaylistEditor: View {
                 } else {
                     Text("No playlist loaded")
                 }
+                
+            case .confirmDeleteAll:
+                VStack(spacing: 16) {
+                    Image(systemName: "trash.circle.fill")
+                        .font(.system(size: 48))
+                    Text("Delete all items?")
+                        .font(.headline)
+                    Text("This will permanently remove every item in this playlist.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    HStack {
+                        Button("Cancel") {
+                            activeModal = nil
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("Delete All", role: .destructive) {
+                            deleteAllItems()
+                            activeModal = nil
+                            withAnimation { editMode?.wrappedValue = .inactive }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .foregroundStyle(.red)
+                    }
+                }
+                .padding()
+                .presentationDetents([.height(220), .medium])
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -195,6 +243,17 @@ struct PlaylistEditor: View {
         playlist?.updatedAt = .now
         save()
     }
+    private func deleteAllItems() {                 // NEW
+            guard let playlist else { return }
+            for item in sortedItems {
+                context.delete(item)
+            }
+            // Keep the relationship array clean (optional but nice for UI)
+            playlist.items.removeAll()
+            playlist.updatedAt = .now
+            save()
+        }
+
 
     private func renumberOrderIndices() {
         for (i, item) in sortedItems.enumerated() { item.orderIndex = i }
