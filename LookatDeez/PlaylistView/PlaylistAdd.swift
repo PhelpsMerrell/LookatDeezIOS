@@ -9,25 +9,52 @@ import SwiftData
 public struct PlaylistAdd: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
-
+    private let playlist: Playlist?
     @State private var title: String = ""
+    @State private var bgKind: PlaylistBackgroundKind = .none
+    @State private var bgColor: RGBAColor? = nil
+    @State private var bgImageData: Data? = nil
 
-    public init() {}
 
-    public var body: some View {
-        Form {
-            Section(header: Text("Details")) {
-                TextField("Playlist Name", text: $title)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.done)
-                    .onSubmit(saveIfValid)
+     init(playlist: Playlist? = nil) {
+            self.playlist = playlist
+            if let p = playlist {
+                _title = State(initialValue: p.title)
+                _bgKind = State(initialValue: p.bgKind)
+                _bgColor = State(initialValue: p.bgColor)
+                _bgImageData = State(initialValue: p.bgImageData)
             }
         }
-        .navigationTitle("Create New Playlist")
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            // LIVE PREVIEW (uses the in-progress picks)
+            ZStack {
+                PlaylistBackgroundView(kind: bgKind, color: bgColor, imageData: bgImageData)
+                    .frame(height: 160)
+                     // optional
+
+                Text(title.isEmpty ? "Playlist Preview" : title)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .shadow(radius: 2)
+            }
+
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Playlist Name", text: $title)
+                        .textInputAutocapitalization(.words)
+                        .submitLabel(.done)
+                        .onSubmit(saveIfValid)
+                }
+
+                PlaylistBackgroundPicker(kind: $bgKind, color: $bgColor, imageData: $bgImageData)
+            }
+        }
+        .navigationTitle(playlist == nil ? "Create New Playlist" : "Edit Playlist")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Save", action: saveIfValid)
-                    .disabled(!isValid)
+                Button("Save", action: saveIfValid).disabled(!isValid)
             }
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { dismiss() }
@@ -41,20 +68,27 @@ public struct PlaylistAdd: View {
 
     private func saveIfValid() {
         guard isValid else { return }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let p = Playlist(title: title.trimmingCharacters(in: .whitespacesAndNewlines))
-        context.insert(p)
-
+        if let p = playlist {
+                    // Editing existing
+                    p.title = trimmed
+                    p.bgKind = bgKind
+                    p.bgColor = bgColor
+                    p.bgImageData = bgImageData
+                } else {
+                    // New
+                    let p = Playlist(title: trimmed)
+                    p.bgKind = bgKind
+                    p.bgColor = bgColor
+                    p.bgImageData = bgImageData
+                    context.insert(p)
+                }
         do {
             try context.save()
-            // 🔑 NEW: refresh playlist index so Share Extension can see it
             writePlaylistIndex(context: context)
-
             dismiss()
-        } catch {
-            // In a real app you might surface an alert
-            print("Failed to save playlist:", error)
-        }
+        } catch { print("Failed to save playlist:", error) }
     }
 }
 

@@ -7,7 +7,7 @@
 import SwiftData
 import Foundation
 @Model
-final class PlaylistItem: Identifiable, Sendable, Equatable {
+final class PlaylistItem: Identifiable, Equatable {
     @Attribute(.unique) var id: UUID
     var label: String
     var videoURL: URL

@@ -27,6 +27,9 @@ struct PlaylistMenu: View {
                     .onDelete(perform: deletePlaylists)
                 }
                 .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .listRowBackground(Color.clear)
+                .background(Color.clear)
             }
         }
         .navigationTitle("Playlists")

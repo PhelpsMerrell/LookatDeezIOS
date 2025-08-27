@@ -1,15 +1,16 @@
-// PlaylistEditor.swift
 import SwiftUI
 import SwiftData
 
 struct PlaylistEditor: View {
+    
+    
     @Environment(\.modelContext) private var context
 
     let playlistId: UUID?
     @State private var playlist: Playlist?
     @State private var showPlayer = false
 
-    // Sorted view of items for stable UI + reordering
+    // Stable sort
     private var sortedItems: [PlaylistItem] {
         guard let playlist else { return [] }
         return playlist.items.sorted { $0.orderIndex < $1.orderIndex }
@@ -18,6 +19,7 @@ struct PlaylistEditor: View {
     var body: some View {
         Group {
             if let playlist {
+                // FOREGROUND CONTENT ONLY
                 List {
                     Section {
                         TextField("Playlist title", text: Binding(
@@ -26,82 +28,100 @@ struct PlaylistEditor: View {
                                 playlist.title = $0
                                 playlist.updatedAt = .now
                                 save()
-                                // NEW: title changed — refresh index
                                 writePlaylistIndex(context: context)
                             }
-                        ))                    }
+                        ))
+                    }
 
                     Section("Items") {
                         ForEach(sortedItems) { item in
                             NavigationLink {
-                                       PlaylistItemAdd(playlistId: playlist.id, itemId: item.id) // EDIT
-                                   } label: {
-                                       PlaylistItemCard(title: item.label, url: item.videoURL)
-                                   }
+                                PlaylistItemAdd(playlistId: playlist.id, itemId: item.id)
+                            } label: {
+                                PlaylistItemCard(title: item.label, url: item.videoURL)
+                            }
                         }
                         .onDelete(perform: deleteItems)
                         .onMove(perform: moveItems)
                     }
                 }
+                // Let background show through and keep rows in-bounds
+                .scrollContentBackground(.hidden)
+                .listRowBackground(Color.clear)
+                .background {            // IMAGE/COLOR AS PURE BACKGROUND
+                    PlaylistBackgroundView(
+                        kind: playlist.bgKind,
+                        color: playlist.bgColor,
+                        imageData: playlist.bgImageData
+                    )
+                    .overlay(              // optional readability
+                        LinearGradient(
+                            colors: [.black.opacity(0.28), .clear, .black.opacity(0.28)],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                        .ignoresSafeArea()
+                    )
+                }
+                .contentMargins(.vertical, 8)
+                .safeAreaPadding(.bottom, 84)   // space for play button
+
                 .navigationTitle("Edit Playlist")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(.regularMaterial, for: .navigationBar)
+                .toolbarBackgroundVisibility(.visible, for: .navigationBar)
                 .toolbar {
                     ToolbarItemGroup(placement: .topBarTrailing) {
                         EditButton()
 
-                        // Add new item
-                        let pid = playlist.id
                         NavigationLink {
-                            PlaylistItemAdd(playlistId: pid)
+                            PlaylistItemAdd(playlistId: playlist.id)
                                 .navigationTitle("Create New Item")
                         } label: {
                             Label("New Item", systemImage: "plus")
                         }
+
+                        NavigationLink {
+                            PlaylistAdd(playlist: playlist)
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
                     }
                 }
-                // Floating play button in the bottom-right corner of THIS screen only
-                .overlay(alignment: .bottomTrailing) {
-                    PlayCornerButton(
-                        enabled: !sortedItems.isEmpty,
-                        action: { showPlayer = true }
-                    )
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 20)
+                // Floating play button that respects safe area
+                .safeAreaInset(edge: .bottom) {
+                    HStack {
+                        Spacer()
+                        PlayCornerButton(
+                            enabled: !sortedItems.isEmpty,
+                            action: { showPlayer = true }
+                        )
+                        .padding(.trailing, 16)
+                    }
+                    .padding(.bottom, 6)
                 }
-                // Present the swipeable Safari player for THIS playlist
                 .sheet(isPresented: $showPlayer) {
-                    PlayAllView(items: sortedItems)
-                        .ignoresSafeArea()
+                    PlayAllView(items: sortedItems).ignoresSafeArea()
                 }
-                
-              
+
             } else {
-                Text("Playlist ain't real")
-                    .task { await loadPlaylist() }
+                Text("Playlist ain't real").task { await loadPlaylist() }
             }
         }
         .onAppear { Task { await loadPlaylist() } }
     }
 
     // MARK: - Data ops
-
     private func loadPlaylist() async {
         guard let pid = playlistId else { return }
         do {
-            let descriptor = FetchDescriptor<Playlist>(
-                predicate: #Predicate { $0.id == pid }
-            )
-            playlist = try context.fetch(descriptor).first
-        } catch {
-            print("Failed to fetch playlist:", error)
-        }
+            let desc = FetchDescriptor<Playlist>(predicate: #Predicate { $0.id == pid })
+            playlist = try context.fetch(desc).first
+        } catch { print("Failed to fetch playlist:", error) }
     }
 
     private func deleteItems(_ offsets: IndexSet) {
         guard let playlist else { return }
-        for index in offsets {
-            context.delete(sortedItems[index])
-        }
+        for index in offsets { context.delete(sortedItems[index]) }
         renumberOrderIndices()
         playlist.updatedAt = .now
         save()
