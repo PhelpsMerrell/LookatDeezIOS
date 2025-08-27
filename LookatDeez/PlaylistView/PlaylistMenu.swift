@@ -7,14 +7,11 @@ struct PlaylistMenu: View {
 
     @Query(sort: \Playlist.updatedAt, order: .reverse) private var playlists: [Playlist]
     @State private var addSheetShowing = false
-    @State private var pushId: UUID? = nil   // for invisible NavigationLink
-    @State private var bgColor: RGBAColor?   // NEW: background color state
+    @State private var bgColor: RGBAColor?
 
     var body: some View {
         ZStack {
-            // Background: chosen color (default system background)
-            (bgColor?.color ?? Color(.systemBackground))
-                .ignoresSafeArea()
+            (bgColor?.color ?? Color(.systemBackground)).ignoresSafeArea()
 
             Group {
                 if playlists.isEmpty {
@@ -33,27 +30,13 @@ struct PlaylistMenu: View {
                 } else {
                     List {
                         ForEach(playlists) { playlist in
-                            ZStack {
+                            // Modern API: value-based NavigationLink (no chevron row chrome)
+                            NavigationLink(value: playlist.id) {
                                 PlaylistCard(playlist: playlist)
                                     .contentShape(RoundedRectangle(cornerRadius: R.md, style: .continuous))
-                                    .onTapGesture { pushId = playlist.id }
-                                    .overlay(
-                                        Image(systemName: "chevron.right")
-                                            .font(.headline)
-                                            .foregroundStyle(.tertiary)
-                                            .padding(.trailing, 12),
-                                        alignment: .trailing
-                                    )
-
-                                NavigationLink(
-                                    destination: PlaylistEditor(playlistId: playlist.id),
-                                    tag: playlist.id,
-                                    selection: $pushId
-                                ) { EmptyView() }
-                                .opacity(0)
-                                .frame(width: 0, height: 0)
-                                .accessibilityHidden(true)
+                                    
                             }
+                            .buttonStyle(.plain)
                             .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
@@ -63,6 +46,10 @@ struct PlaylistMenu: View {
                     .listStyle(.insetGrouped)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
+                    // Destination lives here so ContentView doesn't need changes
+                    .navigationDestination(for: UUID.self) { id in
+                        PlaylistEditor(playlistId: id)
+                    }
                 }
             }
         }
@@ -71,7 +58,7 @@ struct PlaylistMenu: View {
         .safeAreaInset(edge: .bottom) {
             HStack {
                 // Left: Color picker icon only
-                ColorPicker("", // empty string → no visible label
+                ColorPicker("",
                     selection: Binding(
                         get: { bgColor?.color ?? .blue },
                         set: { bgColor = RGBAColor($0) }

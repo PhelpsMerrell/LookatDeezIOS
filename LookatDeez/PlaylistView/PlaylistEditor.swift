@@ -148,6 +148,7 @@ struct PlaylistEditor: View {
             }
         }
         .onAppear { Task { await loadPlaylist() } }
+       
 
         // Single modal switch
         .sheet(item: $activeModal) { modal in
