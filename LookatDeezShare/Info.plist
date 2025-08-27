@@ -2,22 +2,31 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSExtension</key>
-	<dict>
-		<key>NSExtensionAttributes</key>
-		<dict>
-			<key>NSExtensionActivationRule</key>
-			<dict>
-				<key>NSExtensionActivationSupportsText</key>
-				<true/>
-				<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
-				<integer>1</integer>
-			</dict>
-		</dict>
-		<key>NSExtensionMainStoryboard</key>
-		<string>MainInterface</string>
-		<key>NSExtensionPointIdentifier</key>
-		<string>com.apple.share-services</string>
-	</dict>
+    <key>NSExtension</key>
+    <dict>
+      <key>NSExtensionAttributes</key>
+      <dict>
+        <key>NSExtensionActivationRule</key>
+        <dict>
+          <!-- Accept plain text (optional) -->
+          <key>NSExtensionActivationSupportsText</key>
+          <true/>
+          <!-- CRITICAL: Accept generic URLs (e.g., youtube.com links) -->
+          <key>NSExtensionActivationSupportsURLWithMaxCount</key>
+          <integer>1</integer>
+          <!-- Helpful for Safari “web URLs” specifically -->
+          <key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
+          <integer>1</integer>
+        </dict>
+      </dict>
+
+      <!-- You’re using a storyboard-based share extension -->
+      <key>NSExtensionMainStoryboard</key>
+      <string>MainInterface</string>
+
+      <!-- Must be Share Extension to appear in the top app row -->
+      <key>NSExtensionPointIdentifier</key>
+      <string>com.apple.share-services</string>
+    </dict> 
 </dict>
 </plist>

@@ -1,13 +1,29 @@
 import SwiftUI
 import SwiftData
+// 1) Add this at the top of the file (outside the View)
+private enum EditorModal: Identifiable, Equatable {
+    case player
+    case addNewItem
+    case addItem(UUID)          // selected item id
+    case editPlaylist
 
+    var id: String {
+        switch self {
+        case .player: return "player"
+        case .addNewItem: return "addNewItem"
+        case .addItem(let id): return "addItem-\(id)"
+        case .editPlaylist: return "editPlaylist"
+        }
+    }
+}
 struct PlaylistEditor: View {
     @Environment(\.modelContext) private var context
     @Environment(\.editMode) private var editMode
 
     let playlistId: UUID?
     @State private var playlist: Playlist?
-    @State private var showPlayer = false
+    @State private var activeModal: EditorModal? = nil
+    @State private var selectedItemId: UUID?
 
     // Stable sort
     private var sortedItems: [PlaylistItem] {
@@ -22,8 +38,9 @@ struct PlaylistEditor: View {
                 List {
                     Section("Items") {
                         ForEach(sortedItems) { item in
-                            NavigationLink {
-                                PlaylistItemAdd(playlistId: playlist.id, itemId: item.id)
+                            Button {
+                                selectedItemId = item.id
+                                activeModal = .addItem(item.id)
                             } label: {
                                 PlaylistItemCard(title: item.label, url: item.videoURL)
                             }
@@ -61,66 +78,96 @@ struct PlaylistEditor: View {
                 .tint(.primary)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        NavigationLink {
-                            PlaylistAdd(playlist: playlist)
+                        Button {
+                            activeModal = .editPlaylist
                         } label: {
                             Image(systemName: "pencil")
                         }
+                        .accessibilityLabel("Edit playlist")
                     }
                 }
 
                 // BOTTOM BAR: + (left), Edit mode toggle (center), Play (right)
                 .safeAreaInset(edge: .bottom) {
-                    HStack {
-                        // Left: add new item
-                        NavigationLink {
-                            PlaylistItemAdd(playlistId: playlist.id)
-                                .navigationTitle("Create New Item")
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .accessibilityLabel("New item")
-                        }
-
-                        Spacer()
-
-                        // Middle: edit mode toggle (iconic)
-                        Button {
-                            withAnimation {
-                                if editMode?.wrappedValue.isEditing == true {
-                                    editMode?.wrappedValue = .inactive
-                                } else {
-                                    editMode?.wrappedValue = .active
-                                }
+                    Group {
+                        HStack {
+                            // Left: add new item
+                            Button {
+                                activeModal = .addNewItem
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title2)
+                                    .accessibilityLabel("New item")
                             }
-                        } label: {
-                            Image(systemName: "slider.horizontal.3")
-                                .font(.title2)
+                            
+                            Spacer()
+                            
+                            // Middle: edit mode toggle (iconic)
+                            Button {
+                                withAnimation {
+                                    if editMode?.wrappedValue.isEditing == true {
+                                        editMode?.wrappedValue = .inactive
+                                    } else {
+                                        editMode?.wrappedValue = .active
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.title2)
+                            }
+                            .accessibilityLabel("Toggle edit mode")
+                            
+                            Spacer()
+                            
+                            // Right: play button (existing)
+                            PlayCornerButton(
+                                enabled: !sortedItems.isEmpty,
+                                action: { activeModal = .player }
+                            )
                         }
-                        .accessibilityLabel("Toggle edit mode")
-
-                        Spacer()
-
-                        // Right: play button (existing)
-                        PlayCornerButton(
-                            enabled: !sortedItems.isEmpty,
-                            action: { showPlayer = true }
-                        )
-                    }
-                    .padding(.horizontal,16).padding(.vertical,8)
+                        
+                        .padding(.horizontal,16).padding(.vertical,8)
                         .background(.regularMaterial)        // blur “glass”
                         .overlay(Divider(), alignment: .top)
                         .tint(.primary)
+                    }
+                  
                 }
-                .sheet(isPresented: $showPlayer) {
-                    PlayAllView(items: sortedItems).ignoresSafeArea()
-                }
+                
 
             } else {
                 Text("Playlist ain't real").task { await loadPlaylist() }
             }
         }
         .onAppear { Task { await loadPlaylist() } }
+        .sheet(item: $activeModal) { modal in
+            switch modal {
+            case .player:
+                PlayAllView(items: sortedItems).ignoresSafeArea()
+
+            case .addItem(let iid):
+                if let pid = playlist?.id {
+                    PlaylistItemAdd(playlistId: pid, itemId: iid)
+                } else {
+                    Text("No playlist loaded")
+                }
+            case .addNewItem:
+                if let pid = playlist?.id {
+                    PlaylistItemAdd(playlistId: pid)
+                } else {
+                    Text("No playlist loaded")
+                }
+
+            case .editPlaylist:
+                if let p = playlist {
+                    PlaylistAdd(playlist: p)
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
+                } else {
+                    Text("No playlist loaded")
+                }
+            }
+        }
     }
 
     // MARK: - Data ops

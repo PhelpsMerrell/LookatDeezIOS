@@ -5,7 +5,7 @@ import SwiftData
 struct PlaylistMenu: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \Playlist.updatedAt, order: .reverse) private var playlists: [Playlist]
-
+    @State private var addSheetShowing = false
     var body: some View {
         Group {
             if playlists.isEmpty {
@@ -36,11 +36,13 @@ struct PlaylistMenu: View {
         .tint(.primary)   
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink("New Playlist") {
-                    PlaylistAdd()
-                        .navigationTitle("Create New Playlist")
+                Button("New Playlist") {
+                    addSheetShowing = true;
                 }
             }
+        }
+        .sheet(isPresented: $addSheetShowing){
+            PlaylistAdd()
         }
     }
 
