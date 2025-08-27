@@ -9,6 +9,10 @@ import Foundation
 @Model
 final class PlaylistItem: Identifiable, Equatable {
     @Attribute(.unique) var id: UUID
+    
+    @Attribute var isWatched: Bool = false
+    @Attribute var watchedAt: Date? = nil
+    @Attribute var playCount: Int = 0
     var label: String
     var videoURL: URL
     var orderIndex: Int

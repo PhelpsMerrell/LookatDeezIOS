@@ -1,4 +1,3 @@
-// PlayAllView.swift
 import SwiftUI
 import SwiftData
 
@@ -12,8 +11,14 @@ struct PlayAllView: View {
 
     // Start at a given index (defaults to 0)
     init(items: [PlaylistItem], startIndex: Int = 0, onMarkWatched: ((PlaylistItem) -> Void)? = nil) {
-        self.items = items.sorted { $0.orderIndex < $1.orderIndex }
-        self._currentIndex = State(initialValue: min(max(0, startIndex), max(0, self.items.count - 1)))
+        let sorted = items.sorted { $0.orderIndex < $1.orderIndex }
+        self.items = sorted
+
+        // Clamp start index safely (avoids long nested min/max)
+        let last = max(0, sorted.count - 1)
+        let clamped = max(0, min(startIndex, last))
+        self._currentIndex = State(initialValue: clamped)
+
         self.onMarkWatched = onMarkWatched
     }
 
@@ -34,7 +39,6 @@ struct PlayAllView: View {
 
             // Your own bottom toolbar — distinct surface, no overlap
             HStack(spacing: 16) {
-                // Close (optional)
                 Button(role: .cancel) { dismiss() } label: {
                     Image(systemName: "xmark.circle.fill")
                         .imageScale(.large)
@@ -68,10 +72,12 @@ struct PlayAllView: View {
                         onMarkWatched?(item)
                     }
                 } label: {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(systemName: (items[safe: currentIndex]?.isWatched ?? false)
+                          ? "checkmark.circle.fill" : "checkmark.circle")
                         .imageScale(.large)
                 }
-                .accessibilityLabel("Mark as watched")
+                .accessibilityLabel((items[safe: currentIndex]?.isWatched ?? false)
+                                    ? "Unmark watched" : "Mark as watched")
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

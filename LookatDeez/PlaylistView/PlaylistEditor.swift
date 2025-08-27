@@ -61,7 +61,7 @@ struct PlaylistEditor: View {
                                     }
                                 }
                             } label: {
-                                PlaylistItemCard(title: item.label, url: item.videoURL)
+                                PlaylistItemCard(title: item.label, url: item.videoURL, watched: item.isWatched)
                                     .contentShape(RoundedRectangle(cornerRadius: R.md, style: .continuous))
                             }
                             // Row chrome cleanup → no outer box, no separator, comfy insets
@@ -167,14 +167,22 @@ struct PlaylistEditor: View {
         .sheet(item: $activeModal) { modal in
             switch modal {
             case .player:
-                PlayAllView(items: sortedItems)            // or startIndex: N
-                            .presentationDetents([.large])          // feels full-height but leaves room for your bar
-                            .presentationDragIndicator(.visible)
-                
-            case .playerAt(let start):
-                PlayAllView(items: sortedItems, startIndex: start)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
+                PlayAllView(items: sortedItems, startIndex: 0) { item in
+                    item.isWatched.toggle()
+                    item.watchedAt = item.isWatched ? .now : nil
+                    try? context.save()
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+
+            case .playerAt(let start):    // if you added start-at-index behavior
+                PlayAllView(items: sortedItems, startIndex: start) { item in
+                    item.isWatched.toggle()
+                    item.watchedAt = item.isWatched ? .now : nil
+                    try? context.save()
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
                 
             case .addItem(let iid):
                 if let pid = playlist?.id {
