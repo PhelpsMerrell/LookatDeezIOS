@@ -41,7 +41,7 @@ struct PlaylistEditor: View {
             if let playlist {
                 // FOREGROUND CONTENT ONLY
                 List {
-                    Section("Items") {
+                    Section("") {
                         ForEach(sortedItems) { item in
                             // Make the card be the row (no extra layer)
                             Button {
