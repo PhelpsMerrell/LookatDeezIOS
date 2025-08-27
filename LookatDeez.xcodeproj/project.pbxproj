@@ -67,6 +67,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppGroup.swift,
+				Concentricity.swift,
 				ShareCodables.swift,
 			);
 			target = 9BC8F0982E5D748800A23155 /* LookatDeezShare */;

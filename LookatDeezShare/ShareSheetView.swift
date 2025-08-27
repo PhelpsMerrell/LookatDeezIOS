@@ -1,12 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
-import UIKit   // <-- needed for NSExtensionContext
-
-
-
-
-
-
+import UIKit   // needed for NSExtensionContext
 
 struct ShareSheetView: View {
     weak var extensionContext: NSExtensionContext?
@@ -15,42 +9,61 @@ struct ShareSheetView: View {
     @State private var playlists: [PlaylistIndexEntry] = []
     @State private var selectedId: UUID?
 
+    private var canSave: Bool { sharedURL != nil && selectedId != nil }
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Link") {
-                    Text(sharedURL?.absoluteString ?? "—")
-                        .font(.footnote)
-                        .textSelection(.enabled)
-                }
-                Section("Title (optional)") {
-                    TextField("Title", text: $label)
-                        .textInputAutocapitalization(.words)
-                }
-                Section("Playlist") {
-                    if playlists.isEmpty {
-                        Text("No playlists found. Create one in LookatDeez.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Picker("Add to", selection: $selectedId) {
-                            ForEach(playlists) { p in
-                                Text(p.title).tag(Optional.some(p.id))
+        // Provide R.sm/md/lg locally for the extension
+        ConcentricLayout { _, R in
+            NavigationStack {
+                Form {
+                    Section("Link") {
+                        Text(sharedURL?.absoluteString ?? "—")
+                            .font(.footnote)
+                            .textSelection(.enabled)
+                    }
+                    Section("Title (optional)") {
+                        TextField("Title", text: $label)
+                            .textInputAutocapitalization(.words)
+                    }
+                    Section("Playlist") {
+                        if playlists.isEmpty {
+                            Text("No playlists found. Create one in LookatDeez.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Picker("Add to", selection: $selectedId) {
+                                ForEach(playlists) { p in
+                                    Text(p.title).tag(Optional.some(p.id))
+                                }
                             }
                         }
                     }
                 }
-            }
-            .navigationTitle("Add to LookatDeez")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { complete(cancel: true) }
+                .navigationTitle("Add to LookatDeez")
+                .toolbar {
+                    // Keep Cancel up top (system placement)
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { complete(cancel: true) }
+                    }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .disabled(sharedURL == nil || selectedId == nil)
+                .safeAreaInset(edge: .bottom) {
+                    HStack {
+                        Spacer()
+                        // Bottom-right Save pill using your concentric component
+                        ConcentricPillButton(systemName: "square.and.arrow.down.on.square", radius: R.sm) {
+                            save()
+                        }
+                        .disabled(!canSave)
+                        .opacity(canSave ? 1.0 : 0.5)
+                        .accessibilityLabel("Save to selected playlist")
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 8)
+                    .background(.regularMaterial)
+                    .overlay(Divider(), alignment: .top)
                 }
+                .task { await loadInputs() }
             }
-            .task { await loadInputs() }
         }
     }
 
