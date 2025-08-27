@@ -7,7 +7,10 @@ struct PlaylistMenu: View {
 
     @Query(sort: \Playlist.updatedAt, order: .reverse) private var playlists: [Playlist]
     @State private var addSheetShowing = false
-    @State private var bgColor: RGBAColor?
+
+    // Persisted color (JSON-encoded RGBAColor)
+    @AppStorage("playlistMenuBgColor_v1") private var bgColorData: Data = Data()
+    @State private var bgColor: RGBAColor? = nil
 
     var body: some View {
         ZStack {
@@ -19,18 +22,13 @@ struct PlaylistMenu: View {
                         ContentUnavailableView(
                             "No Playlists Yet",
                             systemImage: "music.note.list",
-                            description: Text("Tap “New Playlist” to create your first list.")
+                            description: Text("Tap the '+' to create your first list.")
                         )
-                        ConcentricPillButton(systemName: "plus", radius: R.sm) {
-                            addSheetShowing = true
-                        }
-                        .accessibilityLabel("New Playlist")
                     }
                     .padding(.top, 12)
                 } else {
                     List {
                         ForEach(playlists) { playlist in
-                            // Modern API: value-based NavigationLink (no chevron row chrome)
                             NavigationLink(value: playlist.id) {
                                 PlaylistCard(playlist: playlist)
                                     .contentShape(RoundedRectangle(cornerRadius: R.md, style: .continuous))
@@ -46,7 +44,6 @@ struct PlaylistMenu: View {
                     .listStyle(.insetGrouped)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
-                    // Destination lives here so ContentView doesn't need changes
                     .navigationDestination(for: UUID.self) { id in
                         PlaylistEditor(playlistId: id)
                     }
@@ -57,11 +54,13 @@ struct PlaylistMenu: View {
         .tint(.primary)
         .safeAreaInset(edge: .bottom) {
             HStack {
-                // Left: Color picker icon only
+                // Left: Color picker icon only (persists)
                 ColorPicker("",
                     selection: Binding(
                         get: { bgColor?.color ?? .blue },
-                        set: { bgColor = RGBAColor($0) }
+                        set: { newColor in
+                            bgColor = RGBAColor(newColor)
+                        }
                     ),
                     supportsOpacity: true
                 )
@@ -87,8 +86,30 @@ struct PlaylistMenu: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
+        // Load persisted color once
+        .task { loadBgColor() }
+        // Save whenever it changes
+        .onChange(of: bgColor) { _, _ in saveBgColor() }
     }
 
+    // MARK: - Persistence
+    private func loadBgColor() {
+        guard !bgColorData.isEmpty,
+              let decoded = try? JSONDecoder().decode(RGBAColor.self, from: bgColorData) else {
+            return
+        }
+        bgColor = decoded
+    }
+
+    private func saveBgColor() {
+        if let c = bgColor, let data = try? JSONEncoder().encode(c) {
+            bgColorData = data
+        } else {
+            bgColorData = Data()
+        }
+    }
+
+    // MARK: - Data ops
     private func deletePlaylists(_ offsets: IndexSet) {
         for i in offsets { context.delete(playlists[i]) }
         do {

@@ -1,104 +1,90 @@
-//
-//  PlayAllView.swift
-//  LookatDeez
-//
-//  Created by Phelps Merrell on 8/25/25.
-//
-
+// PlayAllView.swift
 import SwiftUI
 import SwiftData
 
 struct PlayAllView: View {
-    // Accept either a playlist or pre-sorted items. Use whichever init you prefer.
     private let items: [PlaylistItem]
-
-    @State private var currentIndex: Int = 0
+    @State private var currentIndex: Int
     @Environment(\.dismiss) private var dismiss
 
-    init(items: [PlaylistItem]) {
-        // Ensure stable order by orderIndex
+    // Optional hook if you want to persist "watched"
+    var onMarkWatched: ((PlaylistItem) -> Void)?
+
+    // Start at a given index (defaults to 0)
+    init(items: [PlaylistItem], startIndex: Int = 0, onMarkWatched: ((PlaylistItem) -> Void)? = nil) {
         self.items = items.sorted { $0.orderIndex < $1.orderIndex }
+        self._currentIndex = State(initialValue: min(max(0, startIndex), max(0, self.items.count - 1)))
+        self.onMarkWatched = onMarkWatched
     }
 
-    init(playlist: Playlist) {
-        self.init(items: playlist.items)
+    init(playlist: Playlist, startIndex: Int = 0, onMarkWatched: ((PlaylistItem) -> Void)? = nil) {
+        self.init(items: playlist.items, startIndex: startIndex, onMarkWatched: onMarkWatched)
     }
 
     var body: some View {
-        ZStack {
+        VStack(spacing: 0) {
+            // SAFARI lives in the flexible top area (no overlay)
             TabView(selection: $currentIndex) {
                 ForEach(items.indices, id: \.self) { i in
-                    SafariView(url: items[i].videoURL)
-                        .ignoresSafeArea()          // immersive
+                    SafariView(url: items[i].videoURL)   // no ignoresSafeArea()
                         .tag(i)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .automatic))
 
-            // Overlay controls
-            VStack {
-                // Top bar: title + close
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(items[safe: currentIndex]?.label ?? "")
-                            .font(.headline)
-                            .lineLimit(2)
-                        if let host = items[safe: currentIndex]?.videoURL.host {
-                            Text(host)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .imageScale(.large)
-                            .padding(8)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
+            // Your own bottom toolbar — distinct surface, no overlap
+            HStack(spacing: 16) {
+                // Close (optional)
+                Button(role: .cancel) { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .imageScale(.large)
                 }
-                .padding(.horizontal)
-                .padding(.top, 12)
 
                 Spacer()
 
-                // Bottom bar: prev/next + progress
-                HStack(spacing: 16) {
-                    Button {
-                        withAnimation { step(-1) }
-                    } label: {
-                        Label("Prev", systemImage: "chevron.left.circle.fill")
-                    }
-                    .disabled(currentIndex == 0)
-
-                    Text("\(currentIndex + 1) / \(items.count)")
-                        .font(.subheadline)
-                        .monospacedDigit()
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 6)
-                        .background(.ultraThinMaterial, in: Capsule())
-
-                    Button {
-                        withAnimation { step(+1) }
-                    } label: {
-                        Label("Next", systemImage: "chevron.right.circle.fill")
-                    }
-                    .disabled(currentIndex >= items.count - 1)
+                Button { step(-1) } label: {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .imageScale(.large)
                 }
-                .labelStyle(.iconOnly)
-                .font(.title2)
-                .padding(.bottom, 20)
+                .disabled(currentIndex == 0)
+
+                Text("\(currentIndex + 1) / \(items.count)")
+                    .font(.subheadline)
+                    .monospacedDigit()
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+
+                Button { step(+1) } label: {
+                    Image(systemName: "chevron.right.circle.fill")
+                        .imageScale(.large)
+                }
+                .disabled(currentIndex >= items.count - 1)
+
+                Spacer()
+
+                Button {
+                    if let item = items[safe: currentIndex] {
+                        onMarkWatched?(item)
+                    }
+                } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .imageScale(.large)
+                }
+                .accessibilityLabel("Mark as watched")
             }
-            .tint(.primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.regularMaterial)
+            .overlay(Divider(), alignment: .top)
         }
-        .background(Color.black.opacity(0.001)) // keep gestures responsive
+        .tint(.primary)
+        .background(Color(.systemBackground)) // keeps transitions clean
     }
 
     private func step(_ delta: Int) {
-        let next = min(max(0, currentIndex + delta), items.count - 1)
-        currentIndex = next
+        guard !items.isEmpty else { return }
+        currentIndex = min(max(0, currentIndex + delta), items.count - 1)
     }
 }
 

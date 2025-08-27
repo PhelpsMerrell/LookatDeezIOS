@@ -8,6 +8,10 @@ private enum EditorModal: Identifiable, Equatable {
     case addItem(UUID)          // selected item id
     case editPlaylist
     case confirmDeleteAll
+    // add this new case
+    case playerAt(Int)
+
+    
 
     var id: String {
         switch self {
@@ -16,6 +20,7 @@ private enum EditorModal: Identifiable, Equatable {
         case .addItem(let id): return "addItem-\(id)"
         case .editPlaylist: return "editPlaylist"
         case .confirmDeleteAll: return "confirmDeleteAll"
+        case .playerAt(let i): return "playerAt-\(i)"
         }
     }
 }
@@ -45,8 +50,16 @@ struct PlaylistEditor: View {
                         ForEach(sortedItems) { item in
                             // Make the card be the row (no extra layer)
                             Button {
-                                selectedItemId = item.id
-                                activeModal = .addItem(item.id)
+                                if editMode?.wrappedValue.isEditing == true {
+                                    // edit mode → open item editor
+                                    selectedItemId = item.id
+                                    activeModal = .addItem(item.id)
+                                } else {
+                                    // play mode → start player at this item's index
+                                    if let idx = sortedItems.firstIndex(where: { $0.id == item.id }) {
+                                        activeModal = .playerAt(idx)
+                                    }
+                                }
                             } label: {
                                 PlaylistItemCard(title: item.label, url: item.videoURL)
                                     .contentShape(RoundedRectangle(cornerRadius: R.md, style: .continuous))
@@ -154,8 +167,15 @@ struct PlaylistEditor: View {
         .sheet(item: $activeModal) { modal in
             switch modal {
             case .player:
-                PlayAllView(items: sortedItems).ignoresSafeArea()
-
+                PlayAllView(items: sortedItems)            // or startIndex: N
+                            .presentationDetents([.large])          // feels full-height but leaves room for your bar
+                            .presentationDragIndicator(.visible)
+                
+            case .playerAt(let start):
+                PlayAllView(items: sortedItems, startIndex: start)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                
             case .addItem(let iid):
                 if let pid = playlist?.id {
                     PlaylistItemAdd(playlistId: pid, itemId: iid)
