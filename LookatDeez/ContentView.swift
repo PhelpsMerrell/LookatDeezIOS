@@ -9,13 +9,20 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    // Concentric radii available if you want to style inner components later
+    @Environment(\.concentricRadii) private var R
+
     var body: some View {
         NavigationStack {
             PlaylistMenu()
                 .navigationTitle("Playlist Menu")
-        }.toolbarBackground(.regularMaterial, for: .navigationBar)
-            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
-            .tint(.primary)
+        }
+        // Consistent Apple-y glass nav look
+        .toolbarBackground(.regularMaterial, for: .navigationBar)
+        .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+        .tint(.primary)
+        // Optional: unify screen background; keeps continuous-corner vibe when you add cards/sheets
+        .background(Color(.systemBackground))
     }
 }
 
@@ -42,8 +49,11 @@ struct ContentView: View {
             try ctx.save()
         }
 
-        return ContentView()
-            .modelContainer(container)
+        // Match app’s environment to preview (tokens are defaulted in Concentricity.swift)
+        return ConcentricLayout { _, _ in
+            ContentView()
+                .modelContainer(container)
+        }
 
     } catch {
         return Text("Preview error: \(error.localizedDescription)")

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+
 // 1) Add this at the top of the file (outside the View)
 private enum EditorModal: Identifiable, Equatable {
     case player
@@ -18,9 +19,11 @@ private enum EditorModal: Identifiable, Equatable {
         }
     }
 }
+
 struct PlaylistEditor: View {
     @Environment(\.modelContext) private var context
     @Environment(\.editMode) private var editMode
+    @Environment(\.concentricRadii) private var R     // ← concentric radii
 
     let playlistId: UUID?
     @State private var playlist: Playlist?
@@ -40,179 +43,175 @@ struct PlaylistEditor: View {
                 List {
                     Section("Items") {
                         ForEach(sortedItems) { item in
+                            // Make the card be the row (no extra layer)
                             Button {
                                 selectedItemId = item.id
                                 activeModal = .addItem(item.id)
                             } label: {
                                 PlaylistItemCard(title: item.label, url: item.videoURL)
+                                    .contentShape(RoundedRectangle(cornerRadius: R.md, style: .continuous))
                             }
+                            // Row chrome cleanup → no outer box, no separator, comfy insets
+                            .listRowInsets(.init(top: 6, leading: 16, bottom: 6, trailing: 16))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                         }
                         .onDelete(perform: deleteItems)
                         .onMove(perform: moveItems)
                     }
                 }
                 // Let background show through and keep rows in-bounds
+                .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
-                .listRowBackground(Color.clear)
-                .background {            // IMAGE/COLOR AS PURE BACKGROUND
-                    PlaylistBackgroundView(
-                        kind: playlist.bgKind,
-                        color: playlist.bgColor,
-                        imageData: playlist.bgImageData
-                    )
-                    .overlay(
+                .background(
+                    ZStack {
+                        PlaylistBackgroundView(
+                            kind: playlist.bgKind,
+                            color: playlist.bgColor,
+                            imageData: playlist.bgImageData
+                        )
                         LinearGradient(
                             colors: [.black.opacity(0.28), .clear, .black.opacity(0.28)],
                             startPoint: .top, endPoint: .bottom
                         )
                         .ignoresSafeArea()
-                    )
-                }
+                    }
+                )
                 .contentMargins(.vertical, 8)
-                .safeAreaPadding(.bottom, 84)   // space for play button
+                .safeAreaPadding(.bottom, 84)   // space for bottom bar
 
-                
                 .navigationTitle(playlist.title)
-                // On the editor view (or parent)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.regularMaterial, for: .navigationBar)
                 .toolbarBackgroundVisibility(.visible, for: .navigationBar)
                 .tint(.primary)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
+                        ConcentricPillButton(systemName: "pencil", radius: R.sm) {
                             activeModal = .editPlaylist
-                        } label: {
-                            Image(systemName: "pencil")
                         }
                         .accessibilityLabel("Edit playlist")
                     }
                 }
 
-                // BOTTOM BAR: + (left), Edit mode toggle (center), Play (right)
+                // BOTTOM BAR: + (left), Edit/Done or Delete All (center), Play (right)
                 .safeAreaInset(edge: .bottom) {
-                    Group {
-                        HStack {
-                            // Left: add new item
-                            Button {
-                                activeModal = .addNewItem
-                            } label: {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                                    .accessibilityLabel("New item")
-                            }
-                            
-                            Spacer()
-                            
-                            // Middle: edit mode toggle (iconic)
-                            Button {
-                                withAnimation {
-                                    if editMode?.wrappedValue.isEditing == true {
-                                        editMode?.wrappedValue = .inactive
-                                    } else {
-                                        editMode?.wrappedValue = .active
-                                    }
+                    HStack {
+                        // Left: add new item
+                        ConcentricPillButton(systemName: "plus", radius: R.sm) {
+                            activeModal = .addNewItem
+                        }
+                        .accessibilityLabel("New item")
+
+                        Spacer()
+
+                        // Middle: ALWAYS the edit-mode toggle
+                        ConcentricPillButton(systemName: "slider.horizontal.3", radius: R.sm) {
+                            withAnimation {
+                                if editMode?.wrappedValue.isEditing == true {
+                                    editMode?.wrappedValue = .inactive
+                                } else {
+                                    editMode?.wrappedValue = .active
                                 }
-                            } label: {
-                                Image(systemName: "slider.horizontal.3")
-                                    .font(.title2)
-                            }
-                            .accessibilityLabel("Toggle edit mode")
-                            
-                            Spacer()
-                            
-                            // Right: corner action — trash when editing, play otherwise
-                            if editMode?.wrappedValue.isEditing == true {
-                                Button {
-                                    activeModal = .confirmDeleteAll
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .padding(14)
-                                        .background(.ultraThinMaterial, in: Capsule())
-                                        .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
-                                        .shadow(radius: 4, y: 2)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(sortedItems.isEmpty)
-                                .opacity(sortedItems.isEmpty ? 0.5 : 1.0)
-                                .accessibilityLabel("Delete all items")
-                            } else {
-                                PlayCornerButton(
-                                    enabled: !sortedItems.isEmpty,
-                                    action: { activeModal = .player }
-                                )
                             }
                         }
-                        
-                        .padding(.horizontal,16).padding(.vertical,8)
-                        .background(.regularMaterial)        // blur “glass”
-                        .overlay(Divider(), alignment: .top)
-                        .tint(.primary)
+                        .accessibilityLabel(editMode?.wrappedValue.isEditing == true ? "Done editing" : "Enter edit mode")
+
+                        Spacer()
+
+                        // Right: PLAY normally, TRASH when editing
+                        if editMode?.wrappedValue.isEditing == true {
+                            ConcentricPillButton(systemName: "trash", role: .destructive, radius: R.sm) {
+                                activeModal = .confirmDeleteAll
+                            }
+                            .disabled(sortedItems.isEmpty)
+                            .opacity(sortedItems.isEmpty ? 0.5 : 1.0)
+                            .accessibilityLabel("Delete all items")
+                        } else {
+                            ConcentricPillButton(systemName: "play.fill", radius: R.sm) {
+                                activeModal = .player
+                            }
+                            .disabled(sortedItems.isEmpty)
+                            .opacity(sortedItems.isEmpty ? 0.5 : 1.0)
+                            .accessibilityLabel("Play playlist")
+                        }
                     }
-                  
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.regularMaterial)
+                    .overlay(Divider(), alignment: .top)
+                    .tint(.primary)
                 }
-                
 
             } else {
                 Text("Playlist ain't real").task { await loadPlaylist() }
             }
         }
         .onAppear { Task { await loadPlaylist() } }
+
+        // Single modal switch
         .sheet(item: $activeModal) { modal in
             switch modal {
             case .player:
                 PlayAllView(items: sortedItems).ignoresSafeArea()
-                
+
             case .addItem(let iid):
                 if let pid = playlist?.id {
                     PlaylistItemAdd(playlistId: pid, itemId: iid)
                 } else {
                     Text("No playlist loaded")
                 }
+
             case .addNewItem:
                 if let pid = playlist?.id {
                     PlaylistItemAdd(playlistId: pid)
                 } else {
                     Text("No playlist loaded")
                 }
-                
+
             case .editPlaylist:
                 if let p = playlist {
-                    PlaylistAdd(playlist: p)
-                        .presentationDetents([.medium, .large])
-                        .presentationDragIndicator(.visible)
+                    ConcentricModalContainer(radius: R.lg) {
+                        PlaylistAdd(playlist: p)
+                    }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
                 } else {
                     Text("No playlist loaded")
                 }
-                
+
             case .confirmDeleteAll:
-                VStack(spacing: 16) {
-                    Image(systemName: "trash.circle.fill")
-                        .font(.system(size: 48))
-                    Text("Delete all items?")
-                        .font(.headline)
-                    Text("This will permanently remove every item in this playlist.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                    
-                    HStack {
-                        Button("Cancel") {
-                            activeModal = nil
+                ConcentricModalContainer(radius: R.lg) {
+                    VStack(spacing: 16) {
+                        Image(systemName: "trash.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.red)
+                        Text("Delete all items?")
+                            .font(.headline)
+                        Text("This will permanently remove every item in this playlist.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+
+                        HStack {
+                            Button("Cancel") {
+                                activeModal = nil
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button(role: .destructive) {
+                                deleteAllItems()
+                                activeModal = nil
+                                withAnimation { editMode?.wrappedValue = .inactive }
+                            } label: {
+                                Text("Delete All")
+                                    .foregroundStyle(.red) // ensure legible red label
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
-                        .buttonStyle(.bordered)
-                        
-                        Button("Delete All", role: .destructive) {
-                            deleteAllItems()
-                            activeModal = nil
-                            withAnimation { editMode?.wrappedValue = .inactive }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .foregroundStyle(.red)
                     }
                 }
-                .padding()
-                .presentationDetents([.height(220), .medium])
+                .presentationDetents([.height(240), .medium])
                 .presentationDragIndicator(.visible)
             }
         }
@@ -243,17 +242,14 @@ struct PlaylistEditor: View {
         playlist?.updatedAt = .now
         save()
     }
-    private func deleteAllItems() {                 // NEW
-            guard let playlist else { return }
-            for item in sortedItems {
-                context.delete(item)
-            }
-            // Keep the relationship array clean (optional but nice for UI)
-            playlist.items.removeAll()
-            playlist.updatedAt = .now
-            save()
-        }
 
+    private func deleteAllItems() {
+        guard let playlist else { return }
+        for item in sortedItems { context.delete(item) }
+        playlist.items.removeAll()
+        playlist.updatedAt = .now
+        save()
+    }
 
     private func renumberOrderIndices() {
         for (i, item) in sortedItems.enumerated() { item.orderIndex = i }
@@ -263,7 +259,6 @@ struct PlaylistEditor: View {
         do { try context.save() } catch { print("Save failed:", error) }
     }
 }
-
 
 #Preview {
     // Preview uses a real on-disk container here (not inMemory).
@@ -285,86 +280,14 @@ struct PlaylistEditor: View {
         ctx.insert(p)
         try ctx.save()
 
-        return NavigationStack {
-            PlaylistEditor(playlistId: p.id)
+        return ConcentricLayout { _, _ in
+            NavigationStack {
+                PlaylistEditor(playlistId: p.id)
+            }
+            .modelContainer(container)
         }
-        .modelContainer(container)
 
     } catch {
-        // Fallback preview if container creation fails
         return NavigationStack { Text("Preview error: \(error.localizedDescription)") }
-    }
-}
-
-// Inline “liquid glass” mini player just for this screen
-private struct MiniPlayInline: View {
-    let title: String
-    let host: String
-    let enabled: Bool
-    var onPlay: () -> Void
-    var onClear: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "play.circle.fill")
-                .imageScale(.large)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.callout).bold()
-                    .lineLimit(1)
-                Text(host)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            Spacer(minLength: 8)
-
-            Button(action: onPlay) {
-                Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    .imageScale(.medium)
-                    .padding(8)
-            }
-            .disabled(!enabled)
-            .opacity(enabled ? 1 : 0.5)
-
-            Button(action: onClear) {
-                Image(systemName: "xmark")
-                    .imageScale(.medium)
-                    .padding(8)
-            }
-            .disabled(!enabled)
-            .opacity(enabled ? 1 : 0.5)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: Capsule()) // liquid glass
-        .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
-        .shadow(radius: 4, y: 2)
-        .opacity(enabled ? 1 : 0.7)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Play playlist")
-        .accessibilityHint(enabled ? "Opens player" : "No items in this playlist")
-    }
-}
-private struct PlayCornerButton: View {
-    let enabled: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-       
-                Image(systemName: "play.fill")
-                .padding(14)
-                .background(.ultraThinMaterial, in: Capsule())
-                .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))
-                .shadow(radius: 4, y: 2)
-        }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
-        .opacity(enabled ? 1.0 : 0.5)
-        .accessibilityLabel("Play playlist")
-        .accessibilityHint(enabled ? "Opens the web viewer" : "No items to play")
     }
 }

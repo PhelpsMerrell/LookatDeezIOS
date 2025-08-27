@@ -15,13 +15,22 @@ struct LookatDeezApp: App {
 
     @Environment(\.scenePhase) private var scenePhase
 
+    // Optionally set custom tokens; tweak baseHardwareRatio to adjust roundness globally
+    private let concentricTokens = ConcentricTokens(
+        grid: 8,
+        baseHardwareRatio: 0.048
+    )
+
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                ContentView()
+            ConcentricLayout { _, _ in
+                NavigationStack {
+                    ContentView()
+                }
+                .modelContainer(container)
+                .tint(.primary)   // system adaptive tint
             }
-            .modelContainer(container)
-            .tint(.primary)   // system adaptive: black/white depending on background// attach the container to the root view
+            .environment(\.concentricTokens, concentricTokens) // inject tokens app-wide
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
