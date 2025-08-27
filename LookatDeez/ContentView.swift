@@ -13,7 +13,9 @@ struct ContentView: View {
         NavigationStack {
             PlaylistMenu()
                 .navigationTitle("Playlist Menu")
-        }
+        }.toolbarBackground(.regularMaterial, for: .navigationBar)
+            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+            .tint(.primary)
     }
 }
 

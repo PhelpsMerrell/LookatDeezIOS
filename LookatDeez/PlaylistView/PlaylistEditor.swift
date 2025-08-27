@@ -2,9 +2,8 @@ import SwiftUI
 import SwiftData
 
 struct PlaylistEditor: View {
-    
-    
     @Environment(\.modelContext) private var context
+    @Environment(\.editMode) private var editMode
 
     let playlistId: UUID?
     @State private var playlist: Playlist?
@@ -21,18 +20,6 @@ struct PlaylistEditor: View {
             if let playlist {
                 // FOREGROUND CONTENT ONLY
                 List {
-                    Section {
-                        TextField("Playlist title", text: Binding(
-                            get: { playlist.title },
-                            set: {
-                                playlist.title = $0
-                                playlist.updatedAt = .now
-                                save()
-                                writePlaylistIndex(context: context)
-                            }
-                        ))
-                    }
-
                     Section("Items") {
                         ForEach(sortedItems) { item in
                             NavigationLink {
@@ -54,7 +41,7 @@ struct PlaylistEditor: View {
                         color: playlist.bgColor,
                         imageData: playlist.bgImageData
                     )
-                    .overlay(              // optional readability
+                    .overlay(
                         LinearGradient(
                             colors: [.black.opacity(0.28), .clear, .black.opacity(0.28)],
                             startPoint: .top, endPoint: .bottom
@@ -65,21 +52,15 @@ struct PlaylistEditor: View {
                 .contentMargins(.vertical, 8)
                 .safeAreaPadding(.bottom, 84)   // space for play button
 
-                .navigationTitle("Edit Playlist")
+                
+                .navigationTitle(playlist.title)
+                // On the editor view (or parent)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbarBackground(.regularMaterial, for: .navigationBar)
                 .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+                .tint(.primary)
                 .toolbar {
-                    ToolbarItemGroup(placement: .topBarTrailing) {
-                        EditButton()
-
-                        NavigationLink {
-                            PlaylistItemAdd(playlistId: playlist.id)
-                                .navigationTitle("Create New Item")
-                        } label: {
-                            Label("New Item", systemImage: "plus")
-                        }
-
+                    ToolbarItem(placement: .topBarTrailing) {
                         NavigationLink {
                             PlaylistAdd(playlist: playlist)
                         } label: {
@@ -87,17 +68,49 @@ struct PlaylistEditor: View {
                         }
                     }
                 }
-                // Floating play button that respects safe area
+
+                // BOTTOM BAR: + (left), Edit mode toggle (center), Play (right)
                 .safeAreaInset(edge: .bottom) {
                     HStack {
+                        // Left: add new item
+                        NavigationLink {
+                            PlaylistItemAdd(playlistId: playlist.id)
+                                .navigationTitle("Create New Item")
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .accessibilityLabel("New item")
+                        }
+
                         Spacer()
+
+                        // Middle: edit mode toggle (iconic)
+                        Button {
+                            withAnimation {
+                                if editMode?.wrappedValue.isEditing == true {
+                                    editMode?.wrappedValue = .inactive
+                                } else {
+                                    editMode?.wrappedValue = .active
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.title2)
+                        }
+                        .accessibilityLabel("Toggle edit mode")
+
+                        Spacer()
+
+                        // Right: play button (existing)
                         PlayCornerButton(
                             enabled: !sortedItems.isEmpty,
                             action: { showPlayer = true }
                         )
-                        .padding(.trailing, 16)
                     }
-                    .padding(.bottom, 6)
+                    .padding(.horizontal,16).padding(.vertical,8)
+                        .background(.regularMaterial)        // blur “glass”
+                        .overlay(Divider(), alignment: .top)
+                        .tint(.primary)
                 }
                 .sheet(isPresented: $showPlayer) {
                     PlayAllView(items: sortedItems).ignoresSafeArea()
@@ -144,6 +157,7 @@ struct PlaylistEditor: View {
         do { try context.save() } catch { print("Save failed:", error) }
     }
 }
+
 
 #Preview {
     // Preview uses a real on-disk container here (not inMemory).
@@ -234,12 +248,8 @@ private struct PlayCornerButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack {
-                Text("Play").font(.callout).bold()
+       
                 Image(systemName: "play.fill")
-            }
-            
-                .font(.title2)                 // small, but tappable
                 .padding(14)
                 .background(.ultraThinMaterial, in: Capsule())
                 .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 0.5))

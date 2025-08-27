@@ -20,7 +20,8 @@ struct LookatDeezApp: App {
             NavigationStack {
                 ContentView()
             }
-            .modelContainer(container)  // attach the container to the root view
+            .modelContainer(container)
+            .tint(.primary)   // system adaptive: black/white depending on background// attach the container to the root view
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {

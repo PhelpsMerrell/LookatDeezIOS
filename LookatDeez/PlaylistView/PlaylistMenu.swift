@@ -33,6 +33,7 @@ struct PlaylistMenu: View {
             }
         }
         .navigationTitle("Playlists")
+        .tint(.primary)   
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink("New Playlist") {
